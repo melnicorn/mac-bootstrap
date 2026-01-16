@@ -1,0 +1,12 @@
+alias cls='clear && printf "\e[3J"'
+alias p=pnpm
+
+# Minecraft GCP project
+export MC_PROJECT_ID="minecraft-482519"
+export MC_ZONE="us-central1-a"
+export MC_INSTANCE="mc-1"
+
+alias mc-start='gcloud compute instances start "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE"'
+alias mc-stop='gcloud compute instances stop "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE"'
+alias mc-status='gcloud compute instances describe "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE" --format="get(status)"'
+alias mc-ssh='gcloud compute ssh "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE"'

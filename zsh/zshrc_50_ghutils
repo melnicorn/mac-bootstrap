@@ -1,0 +1,53 @@
+alias merge-main='export CURR_BRANCH=$(git branch --show-current) && \
+                  git checkout main && \
+                  git pull && \
+                  git checkout $CURR_BRANCH && \
+                  git merge main'
+
+alias git-clean-local='(git rev-parse -verify main >/dev/null 2>&1 && git checkout main) && \
+                       git branch | grep -vE "^\*?\s*main$" | xargs git branch -d && \
+                       git pull'
+
+gopen() {
+  #1. Get the remote URL for 'origin', suppressing git's error messages.
+  local remote_url=$(git remote get-url origin 2>/dev/null)
+
+  #2. Check if a URL was found. If not, print an error and exit.
+  if [ -z "$remote_url" ]; then
+    echo "❌ No remote URL found for 'origin'"
+    return 1
+  fi
+
+  #3. Convert SSH or HTTPS git URLs to a clean browser link.
+  #   e.g., git@github.com:user/repo.git -> https://github.com/user/repo
+  #   e.g., https://github.com/user/repo.git -> https://github.com/user/repo
+  local browser_url=$(echo "$remote_url" | sed -e 's/git@\(.*\):/https:\/\/\1\//' -e 's/\.git$//')
+
+  #4. Open the URL using the appropriate command for the OS
+  echo "🚀 Opening URL: $browser_url"
+  open "$browser_url"
+}
+
+create-branch() {
+  # Check if a branch name was provided. If not, print an error and exit.
+  if [ -z "$1" ]; then
+    echo "❌ No branch name provided"
+    return 1
+  fi
+
+  # Check if the branch already exists. If it does, print an error and exit.
+  if git rev-parse --verify "$1" >/dev/null 2>&1; then
+    echo "❌ Branch $1 already exists"
+    return 1
+  fi
+
+  local_branch_name="$1"
+
+  echo "🌱 Creating and switching to a local branch: $local_branch_name"
+  git checkout -b "$local_branch_name"
+
+  echo "☁️ Pushing the local branch to the remote 'origin' and setting upstream..."
+  git push -u origin "$local_branch_name"
+
+  echo "✅ Done! Branch '$local_branch_name' is now live on remote and tracking."
+}

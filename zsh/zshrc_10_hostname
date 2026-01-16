@@ -1,0 +1,13 @@
+# Keep HOST/HOSTNAME in sync with System Settings changes without restarting shells.
+# Runs before each prompt render.
+
+_refresh_hostname_vars() {
+  local hn
+  hn="$(scutil --get HostName 2>/dev/null)" || hn=""
+  [[ -z "$hn" ]] && hn="$(hostname -s 2>/dev/null)" || true
+  [[ -n "$hn" ]] && export HOST="$hn" HOSTNAME="$hn"
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _refresh_hostname_vars
+_refresh_hostname_vars

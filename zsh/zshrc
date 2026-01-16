@@ -1,0 +1,12 @@
+# This file is intended to be symlinked to ~/.zshrc
+
+ZSH_BOOTSTRAP_DIR="${ZSH_BOOTSTRAP_DIR:-$HOME/.zsh}"
+
+if [[ -d "$ZSH_BOOTSTRAP_DIR" ]]; then
+  for file in "$ZSH_BOOTSTRAP_DIR"/zshrc_*; do
+    [[ -r "$file" ]] && source "$file"
+  done
+fi
+
+# Optional per-machine overrides (not in git)
+[[ -f "$HOME/.zshrc_local" ]] && source "$HOME/.zshrc_local"

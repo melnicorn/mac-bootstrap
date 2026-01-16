@@ -1,0 +1,13 @@
+# Google Cloud CLI: ensure components-installed binaries are on PATH
+# (gcloud itself should already be on PATH after brew install, but components go here)
+
+# Google Cloud CLI (gcloud) — make sure binary + PATH is usable
+# Homebrew installs this under: $(brew --prefix)/share/google-cloud-sdk
+GCLOUD_SDK_DIR="$(brew --prefix)/share/google-cloud-sdk"
+
+if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
+  GCLOUD_COMPONENTS_BIN="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin"
+  if [[ -d "$GCLOUD_COMPONENTS_BIN" ]]; then
+    export PATH="$GCLOUD_COMPONENTS_BIN:$PATH"
+  fi
+fi
