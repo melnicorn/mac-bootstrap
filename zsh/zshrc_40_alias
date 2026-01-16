@@ -10,3 +10,6 @@ alias mc-start='gcloud compute instances start "$MC_INSTANCE" --project="$MC_PRO
 alias mc-stop='gcloud compute instances stop "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE"'
 alias mc-status='gcloud compute instances describe "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE" --format="get(status)"'
 alias mc-ssh='gcloud compute ssh "$MC_INSTANCE" --project="$MC_PROJECT_ID" --zone="$MC_ZONE"'
+
+
+alias nvm='echo "Use volta instead! From the project root, run \`volta install node@<version>\` then \`volta install pnpm\`"'
