@@ -170,6 +170,13 @@ brew_bundle() {
   info "Brew bundle complete."
 }
 
+setup_git() {
+  bold "Git configuration"
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  run bash "$repo_root/scripts/setup-git.sh"
+}
+
 setup_repos_volume() {
   bold "Case-sensitive Repos volume"
   local repo_root
@@ -229,6 +236,7 @@ main() {
     warn "brew not on PATH yet (likely dry-run). Skipping brew bundle."
   fi
 
+  setup_git
   setup_repos_volume
   setup_zsh
   setup_gcloud
