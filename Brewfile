@@ -17,5 +17,9 @@ brew "volta"
 # JRE (best OpenJDK distro for non-Java dev needs)
 cask "temurin"
 
+
 # Google Cloud SDK
 cask "gcloud-cli"
+
+# Data Stores
+brew "mysql"

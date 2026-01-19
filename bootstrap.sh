@@ -209,6 +209,13 @@ install_antigravity() {
   run bash "$repo_root/scripts/install-antigravity.sh"
 }
 
+setup_mysql() {
+  bold "MySQL"
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  run bash "$repo_root/scripts/setup-mysql.sh"
+}
+
 main() {
   parse_args "$@"
   is_macos || die "This bootstrap is for macOS only."
@@ -241,6 +248,7 @@ main() {
   setup_zsh
   setup_gcloud
   install_antigravity
+  setup_mysql
 
   bold "Done"
   info "Recommended: quit/reopen terminal (or log out/in) to ensure shell + PATH changes apply."
