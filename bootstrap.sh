@@ -109,6 +109,39 @@ set_hostname() {
   info "Hostname set."
 }
 
+install_rosetta() {
+  bold "Rosetta 2"
+  if [[ "$(uname -m)" != "arm64" ]]; then
+    info "Not on Apple Silicon. Skipping Rosetta installation."
+    return 0
+  fi
+
+  if /usr/bin/pgrep oahd >/dev/null 2>&1; then
+    info "Rosetta is already running/installed."
+    return 0
+  fi
+
+  # More robust check: check for a known rosetta file or use pkgutil?
+  # The pgrep check is good for running, but maybe not if it's installed but not running?
+  # Apple recommends checking for the service or just running the installer safely.
+  # softwareupdate --install-rosetta will return success if already installed?
+  # Actually, /usr/bin/pgrep oahd might not verify installation if not active.
+  # A common check is:
+  if [[ -f "/Library/Apple/System/Library/LaunchDaemons/com.apple.oahd.plist" ]]; then
+      info "Rosetta appears to be installed."
+      return 0
+  fi
+
+  info "Installing Rosetta 2..."
+  if [[ "$DRY_RUN" == "true" ]]; then
+    run_sudo softwareupdate --install-rosetta --agree-to-license
+    return 0
+  fi
+
+  run_sudo softwareupdate --install-rosetta --agree-to-license
+  info "Rosetta 2 installed."
+}
+
 install_xcode_clt() {
   bold "Xcode Command Line Tools"
   if xcode-select -p >/dev/null 2>&1; then
@@ -232,6 +265,8 @@ main() {
   fi
 
   set_hostname "$HOSTNAME_ARG"
+
+  install_rosetta
 
   install_xcode_clt
   install_homebrew
