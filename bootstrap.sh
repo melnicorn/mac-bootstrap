@@ -24,6 +24,24 @@ confirm() {
 DRY_RUN=false
 HOSTNAME_ARG=""
 
+# Ordered list of all available steps
+ALL_STEPS=(
+  hostname
+  rosetta
+  xcode
+  homebrew
+  brew-bundle
+  git
+  repos-volume
+  zsh
+  gcloud
+  antigravity
+  mysql
+)
+
+# Steps selected via --only (empty = run all)
+SELECTED_STEPS=()
+
 run() {
   if [[ "$DRY_RUN" == "true" ]]; then
     printf "[dry-run] %q" "$1"
@@ -45,6 +63,25 @@ run_sudo() {
   sudo "$@"
 }
 
+list_steps() {
+  bold "Available steps:"
+  for s in "${ALL_STEPS[@]}"; do
+    printf "  %s\n" "$s"
+  done
+}
+
+step_enabled() {
+  local step="$1"
+  # If no --only was given, every step is enabled
+  if [[ ${#SELECTED_STEPS[@]} -eq 0 ]]; then
+    return 0
+  fi
+  for s in "${SELECTED_STEPS[@]}"; do
+    [[ "$s" == "$step" ]] && return 0
+  done
+  return 1
+}
+
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -56,11 +93,42 @@ parse_args() {
         HOSTNAME_ARG="${2:-}"
         shift 2
         ;;
+      --only)
+        [[ -z "${2:-}" ]] && die "--only requires a comma-separated list of steps"
+        IFS=',' read -ra SELECTED_STEPS <<< "$2"
+        # Validate every requested step
+        for sel in "${SELECTED_STEPS[@]}"; do
+          local found=false
+          for valid in "${ALL_STEPS[@]}"; do
+            [[ "$sel" == "$valid" ]] && found=true && break
+          done
+          [[ "$found" == "true" ]] || die "Unknown step: $sel (run with --list to see available steps)"
+        done
+        shift 2
+        ;;
+      --list)
+        list_steps
+        exit 0
+        ;;
       -h|--help)
         cat <<EOF
-Usage: ./bootstrap.sh [--dry-run] [--hostname NAME] [NAME]
+Usage: ./bootstrap.sh [OPTIONS] [HOSTNAME]
 
-If NAME is provided as a positional arg, it is treated as hostname.
+Options:
+  --dry-run              Print commands instead of executing them
+  --hostname NAME        Set the machine hostname
+  --only step1,step2,..  Run only the specified steps (comma-separated)
+  --list                 List available step names and exit
+  -h, --help             Show this help and exit
+
+Available steps:
+  $(printf '%s, ' "${ALL_STEPS[@]}" | sed 's/, $//')
+
+Examples:
+  ./bootstrap.sh                          # run everything
+  ./bootstrap.sh --only zsh               # run only the zsh step
+  ./bootstrap.sh --only git,zsh,gcloud    # run several steps
+  ./bootstrap.sh --dry-run --only homebrew # dry-run a single step
 EOF
         exit 0
         ;;
@@ -256,6 +324,9 @@ main() {
   bold "mac-bootstrap starting"
   info "Log file: $LOG_FILE"
   info "Dry-run: $DRY_RUN"
+  if [[ ${#SELECTED_STEPS[@]} -gt 0 ]]; then
+    info "Running steps: ${SELECTED_STEPS[*]}"
+  fi
 
   if [[ "$DRY_RUN" == "false" ]]; then
     sudo -v
@@ -264,26 +335,26 @@ main() {
     warn "Dry-run: skipping sudo keep-alive."
   fi
 
-  set_hostname "$HOSTNAME_ARG"
+  step_enabled hostname      && set_hostname "$HOSTNAME_ARG"
+  step_enabled rosetta       && install_rosetta
+  step_enabled xcode         && install_xcode_clt
+  step_enabled homebrew      && install_homebrew
 
-  install_rosetta
-
-  install_xcode_clt
-  install_homebrew
-
-  # If dry-run and brew isn't installed, bundle won't run. That's expected.
-  if command -v brew >/dev/null 2>&1; then
-    brew_bundle
-  else
-    warn "brew not on PATH yet (likely dry-run). Skipping brew bundle."
+  if step_enabled brew-bundle; then
+    # If dry-run and brew isn't installed, bundle won't run. That's expected.
+    if command -v brew >/dev/null 2>&1; then
+      brew_bundle
+    else
+      warn "brew not on PATH yet (likely dry-run). Skipping brew bundle."
+    fi
   fi
 
-  setup_git
-  setup_repos_volume
-  setup_zsh
-  setup_gcloud
-  install_antigravity
-  setup_mysql
+  step_enabled git           && setup_git
+  step_enabled repos-volume  && setup_repos_volume
+  step_enabled zsh           && setup_zsh
+  step_enabled gcloud        && setup_gcloud
+  step_enabled antigravity   && install_antigravity
+  step_enabled mysql         && setup_mysql
 
   bold "Done"
   info "Recommended: quit/reopen terminal (or log out/in) to ensure shell + PATH changes apply."

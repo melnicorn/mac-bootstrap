@@ -28,6 +28,20 @@ gopen() {
   open "$browser_url"
 }
 
+gact() {
+  local remote_url=$(git remote get-url origin 2>/dev/null)
+
+  if [ -z "$remote_url" ]; then
+    echo "❌ No remote URL found for 'origin'"
+    return 1
+  fi
+
+  local browser_url=$(echo "$remote_url" | sed -e 's/git@\(.*\):/https:\/\/\1\//' -e 's/\.git$//')
+
+  echo "🚀 Opening URL: $browser_url/actions"
+  open "$browser_url/actions"
+}
+
 create-branch() {
   # Check if a branch name was provided. If not, print an error and exit.
   if [ -z "$1" ]; then
