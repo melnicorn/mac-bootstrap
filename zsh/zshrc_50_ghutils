@@ -23,7 +23,13 @@ gopen() {
   #   e.g., https://github.com/user/repo.git -> https://github.com/user/repo
   local browser_url=$(echo "$remote_url" | sed -e 's/git@\(.*\):/https:\/\/\1\//' -e 's/\.git$//')
 
-  #4. Open the URL using the appropriate command for the OS
+  #4. If on a branch other than 'main', append 'tree/<branch>' to navigate to current code
+  local branch=$(git branch --show-current 2>/dev/null)
+  if [[ -n "$branch" && "$branch" != "main" ]]; then
+    browser_url="${browser_url}/tree/${branch}"
+  fi
+
+  #5. Open the URL using the appropriate command for the OS
   echo "🚀 Opening URL: $browser_url"
   open "$browser_url"
 }
