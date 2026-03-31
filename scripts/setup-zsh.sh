@@ -27,6 +27,8 @@ if [[ -e "$ZSHRC" && ! -L "$ZSHRC" ]]; then
   backup="$ZSHRC.backup.$(date +%Y%m%d-%H%M%S)"
   echo "Backing up existing .zshrc → $backup"
   mv "$ZSHRC" "$backup"
+elif [[ ! -e "$ZSHRC" ]]; then
+  echo "Creating new .zshrc link..."
 fi
 
 # Symlink canonical loader to ~/.zshrc

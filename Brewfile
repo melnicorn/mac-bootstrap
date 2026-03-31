@@ -3,6 +3,7 @@ cask "iterm2"
 
 # Essentials
 brew "git"
+brew "gh"
 brew "jq"
 brew "ripgrep"
 brew "fd"

@@ -23,6 +23,9 @@ confirm() {
 
 DRY_RUN=false
 HOSTNAME_ARG=""
+RUN_ALL=false
+REQUESTED_STEPS=()
+ALL_STEPS=(hostname rosetta xcode homebrew brew git repos zsh gcloud antigravity mysql)
 
 run() {
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -56,11 +59,37 @@ parse_args() {
         HOSTNAME_ARG="${2:-}"
         shift 2
         ;;
+      --step)
+        [[ -n "${2:-}" ]] || die "--step requires an argument"
+        REQUESTED_STEPS+=("$2")
+        shift 2
+        ;;
+      --all)
+        RUN_ALL=true
+        shift
+        ;;
+      --list)
+        info "Available steps: ${ALL_STEPS[*]}"
+        exit 0
+        ;;
       -h|--help)
         cat <<EOF
-Usage: ./bootstrap.sh [--dry-run] [--hostname NAME] [NAME]
+Usage: ./bootstrap.sh [OPTIONS]
 
-If NAME is provided as a positional arg, it is treated as hostname.
+Options:
+  --all               Run all bootstrap steps
+  --step NAME         Run a specific step (can be used multiple times)
+  --list              List all available steps
+  --dry-run           Show what would be done without making changes
+  --hostname NAME     Set the machine hostname
+  -h, --help          Show this help message
+
+Steps:
+  ${ALL_STEPS[*]}
+
+Example:
+  ./bootstrap.sh --step homebrew --step git
+  ./bootstrap.sh --all --hostname my-mac
 EOF
         exit 0
         ;;
@@ -78,6 +107,19 @@ EOF
         ;;
     esac
   done
+}
+
+should_run() {
+  local step="$1"
+  if [[ "$RUN_ALL" == "true" ]]; then
+    return 0
+  fi
+  for s in "${REQUESTED_STEPS[@]}"; do
+    if [[ "$s" == "$step" ]]; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 set_hostname() {
@@ -257,6 +299,10 @@ main() {
   info "Log file: $LOG_FILE"
   info "Dry-run: $DRY_RUN"
 
+  if [[ "$RUN_ALL" == "false" && ${#REQUESTED_STEPS[@]} -eq 0 ]]; then
+    die "No steps specified. Use --step NAME or --all. Use --list to see steps."
+  fi
+
   if [[ "$DRY_RUN" == "false" ]]; then
     sudo -v
     while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
@@ -264,26 +310,54 @@ main() {
     warn "Dry-run: skipping sudo keep-alive."
   fi
 
-  set_hostname "$HOSTNAME_ARG"
-
-  install_rosetta
-
-  install_xcode_clt
-  install_homebrew
-
-  # If dry-run and brew isn't installed, bundle won't run. That's expected.
-  if command -v brew >/dev/null 2>&1; then
-    brew_bundle
-  else
-    warn "brew not on PATH yet (likely dry-run). Skipping brew bundle."
+  if should_run "hostname"; then
+    set_hostname "$HOSTNAME_ARG"
   fi
 
-  setup_git
-  setup_repos_volume
-  setup_zsh
-  setup_gcloud
-  install_antigravity
-  setup_mysql
+  if should_run "rosetta"; then
+    install_rosetta
+  fi
+
+  if should_run "xcode" || should_run "xcode_clt"; then
+    install_xcode_clt
+  fi
+
+  if should_run "homebrew"; then
+    install_homebrew
+  fi
+
+  # If dry-run and brew isn't installed, bundle won't run. That's expected.
+  if should_run "brew" || should_run "brew_bundle"; then
+    if command -v brew >/dev/null 2>&1; then
+      brew_bundle
+    else
+      warn "brew not on PATH yet (likely dry-run). Skipping brew bundle."
+    fi
+  fi
+
+  if should_run "git"; then
+    setup_git
+  fi
+
+  if should_run "repos" || should_run "repos_volume"; then
+    setup_repos_volume
+  fi
+
+  if should_run "zsh"; then
+    setup_zsh
+  fi
+
+  if should_run "gcloud"; then
+    setup_gcloud
+  fi
+
+  if should_run "antigravity"; then
+    install_antigravity
+  fi
+
+  if should_run "mysql"; then
+    setup_mysql
+  fi
 
   bold "Done"
   info "Recommended: quit/reopen terminal (or log out/in) to ensure shell + PATH changes apply."
