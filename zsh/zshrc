@@ -11,7 +11,7 @@ fi
 # Optional per-machine overrides (not in git)
 [[ -f "$HOME/.zshrc_local" ]] && source "$HOME/.zshrc_local"
 # Added by Antigravity
-export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.antigravity/antigravity/bin:$PATH"
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
