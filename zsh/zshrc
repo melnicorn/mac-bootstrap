@@ -11,12 +11,7 @@ fi
 # Optional per-machine overrides (not in git)
 [[ -f "$HOME/.zshrc_local" ]] && source "$HOME/.zshrc_local"
 # Added by Antigravity
-export PATH="$HOME/.local/bin:$HOME/.antigravity/antigravity/bin:$PATH"
+[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
+[[ ":$PATH:" != *":$HOME/.antigravity/antigravity/bin:"* ]] && export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
-# pnpm
-export PNPM_HOME="$HOME/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
+# PNPM_HOME and its PATH entry are set in zshenv (available to all shells)

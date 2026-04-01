@@ -7,7 +7,7 @@ GCLOUD_SDK_DIR="$(brew --prefix)/share/google-cloud-sdk"
 
 if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
   GCLOUD_COMPONENTS_BIN="$HOMEBREW_PREFIX/share/google-cloud-sdk/bin"
-  if [[ -d "$GCLOUD_COMPONENTS_BIN" ]]; then
+  if [[ -d "$GCLOUD_COMPONENTS_BIN" ]] && [[ ":$PATH:" != *":$GCLOUD_COMPONENTS_BIN:"* ]]; then
     export PATH="$GCLOUD_COMPONENTS_BIN:$PATH"
   fi
 fi

@@ -5,6 +5,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ZSH_SRC="$REPO_ROOT/zsh"
 ZSH_DST="$HOME/.zsh"
 ZSHRC="$HOME/.zshrc"
+ZSHENV="$HOME/.zshenv"
 
 echo "Setting up zsh config..."
 
@@ -33,5 +34,15 @@ fi
 
 # Symlink canonical loader to ~/.zshrc
 ln -sf "$ZSH_SRC/zshrc" "$ZSHRC"
+
+# Backup existing ~/.zshenv if it's a real file, then symlink
+if [[ -e "$ZSHENV" && ! -L "$ZSHENV" ]]; then
+  backup="$ZSHENV.backup.$(date +%Y%m%d-%H%M%S)"
+  echo "Backing up existing .zshenv → $backup"
+  mv "$ZSHENV" "$backup"
+elif [[ ! -e "$ZSHENV" ]]; then
+  echo "Creating new .zshenv link..."
+fi
+ln -sf "$ZSH_SRC/zshenv" "$ZSHENV"
 
 echo "zsh setup complete."

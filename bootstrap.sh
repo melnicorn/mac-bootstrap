@@ -21,11 +21,11 @@ confirm() {
   [[ "${ans,,}" == "y" || "${ans,,}" == "yes" ]]
 }
 
+# Steps selected via --only (empty = run all)
+SELECTED_STEPS=()
 DRY_RUN=false
+UPDATE=false
 HOSTNAME_ARG=""
-RUN_ALL=false
-REQUESTED_STEPS=()
-ALL_STEPS=(hostname rosetta xcode homebrew brew git repos zsh gcloud antigravity mysql)
 
 # Ordered list of all available steps
 ALL_STEPS=(
@@ -40,10 +40,8 @@ ALL_STEPS=(
   gcloud
   antigravity
   mysql
+  opencode
 )
-
-# Steps selected via --only (empty = run all)
-SELECTED_STEPS=()
 
 run() {
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -92,6 +90,10 @@ parse_args() {
         DRY_RUN=true
         shift
         ;;
+      --update)
+        UPDATE=true
+        shift
+        ;;
       --hostname)
         HOSTNAME_ARG="${2:-}"
         shift 2
@@ -121,6 +123,7 @@ Options:
   --dry-run              Print commands instead of executing them
   --hostname NAME        Set the machine hostname
   --only step1,step2,..  Run only the specified steps (comma-separated)
+  --update               Upgrade already-installed tools (brew packages, gcloud components, Node via Volta)
   --list                 List available step names and exit
   -h, --help             Show this help and exit
 
@@ -128,10 +131,13 @@ Available steps:
   $(printf '%s, ' "${ALL_STEPS[@]}" | sed 's/, $//')
 
 Examples:
-  ./bootstrap.sh                          # run everything
-  ./bootstrap.sh --only zsh               # run only the zsh step
-  ./bootstrap.sh --only git,zsh,gcloud    # run several steps
-  ./bootstrap.sh --dry-run --only homebrew # dry-run a single step
+  ./bootstrap.sh                             # run everything
+  ./bootstrap.sh --only zsh                  # run only the zsh step
+  ./bootstrap.sh --only git,zsh,gcloud       # run several steps
+  ./bootstrap.sh --dry-run --only homebrew   # dry-run a single step
+  ./bootstrap.sh --update                    # upgrade all tools
+  ./bootstrap.sh --only gcloud --update      # upgrade gcloud components only
+  ./bootstrap.sh --only brew-bundle --update # upgrade all Homebrew packages
 EOF
         exit 0
         ;;
@@ -151,24 +157,12 @@ EOF
   done
 }
 
-should_run() {
-  local step="$1"
-  if [[ "$RUN_ALL" == "true" ]]; then
-    return 0
-  fi
-  for s in "${REQUESTED_STEPS[@]}"; do
-    if [[ "$s" == "$step" ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
 
 set_hostname() {
   bold "Hostname"
-  local current
-  current="$(scutil --get ComputerName 2>/dev/null || true)"
-  info "Current ComputerName: ${current:-<unset>}"
+  info "Current ComputerName:  $(scutil --get ComputerName  2>/dev/null || echo '<unset>')"
+  info "Current HostName:      $(scutil --get HostName      2>/dev/null || echo '<unset>')"
+  info "Current LocalHostName: $(scutil --get LocalHostName 2>/dev/null || echo '<unset>')"
 
   local new_name="${1:-}"
   if [[ -z "$new_name" ]]; then
@@ -217,10 +211,7 @@ install_rosetta() {
   fi
 
   info "Installing Rosetta 2..."
-  if [[ "$DRY_RUN" == "true" ]]; then
-    run_sudo softwareupdate --install-rosetta --agree-to-license
-    return 0
-  fi
+  run_sudo softwareupdate --install-rosetta --agree-to-license
 
   run_sudo softwareupdate --install-rosetta --agree-to-license
   info "Rosetta 2 installed."
@@ -284,6 +275,16 @@ brew_bundle() {
 
   run brew update
   run brew bundle --file="$brewfile"
+
+  if [[ "$UPDATE" == "true" ]]; then
+    info "Upgrading outdated Homebrew packages..."
+    run brew upgrade
+    if command -v volta >/dev/null 2>&1; then
+      info "Updating Volta-managed Node..."
+      run volta install node@latest
+    fi
+  fi
+
   info "Brew bundle complete."
 }
 
@@ -312,6 +313,17 @@ setup_gcloud() {
   bold "gcloud"
   local repo_root
   repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+  if [[ "$UPDATE" == "true" ]]; then
+    if command -v gcloud >/dev/null 2>&1; then
+      info "Updating gcloud components..."
+      run gcloud components update --quiet
+    else
+      warn "gcloud not on PATH. Skipping component update."
+    fi
+    return 0
+  fi
+
   if [[ "$DRY_RUN" == "true" ]]; then
     run bash "$repo_root/scripts/setup-gcloud.sh"
     return 0
@@ -333,6 +345,13 @@ setup_mysql() {
   run bash "$repo_root/scripts/setup-mysql.sh"
 }
 
+setup_opencode() {
+  bold "OpenCode"
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  run bash "$repo_root/scripts/setup-opencode.sh"
+}
+
 main() {
   parse_args "$@"
   is_macos || die "This bootstrap is for macOS only."
@@ -344,8 +363,16 @@ main() {
     info "Running steps: ${SELECTED_STEPS[*]}"
   fi
 
-  if [[ "$RUN_ALL" == "false" && ${#REQUESTED_STEPS[@]} -eq 0 ]]; then
-    die "No steps specified. Use --step NAME or --all. Use --list to see steps."
+  if [[ ${#SELECTED_STEPS[@]} -eq 0 ]]; then
+    # Default to running all steps if none are specified? 
+    # The --only logic currently requires steps to be passed if the user wants subset.
+    # If the user wants to run EVERYTHING, they just call it without --only.
+    # So the check should be: if they DID use --only, it's not empty. 
+    # But wait, looking at the code, if SELECTED_STEPS is empty, step_enabled returns 0 (true).
+    # This means the script runs EVERYTHING by default.
+    # The check on line 347-349 was intended to catch "nothing to do", but it was broken.
+    # I'll just remove it because the default is "run everything".
+    :
   fi
 
   if [[ "$DRY_RUN" == "false" ]]; then
@@ -375,6 +402,7 @@ main() {
   step_enabled gcloud        && setup_gcloud
   step_enabled antigravity   && install_antigravity
   step_enabled mysql         && setup_mysql
+  step_enabled opencode      && setup_opencode
 
   bold "Done"
   info "Recommended: quit/reopen terminal (or log out/in) to ensure shell + PATH changes apply."

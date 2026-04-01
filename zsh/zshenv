@@ -1,0 +1,11 @@
+# This file is intended to be symlinked to ~/.zshenv
+# Sourced for ALL shells (interactive, non-interactive, scripts, git hooks, launchd)
+# Keep this minimal — aliases, completions, and prompts belong in zshrc
+
+# Volta (Node version manager)
+export VOLTA_HOME="$HOME/.volta"
+[[ ":$PATH:" != *":$VOLTA_HOME/bin:"* ]] && export PATH="$VOLTA_HOME/bin:$PATH"
+
+# pnpm
+export PNPM_HOME="$HOME/Library/pnpm"
+[[ ":$PATH:" != *":$PNPM_HOME:"* ]] && export PATH="$PNPM_HOME:$PATH"

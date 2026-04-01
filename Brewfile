@@ -2,12 +2,14 @@
 cask "iterm2"
 
 # Essentials
+tap "anomalyco/tap"
 brew "git"
 brew "gh"
 brew "jq"
 brew "ripgrep"
 brew "fd"
 brew "fzf"
+brew "opencode"
 
 # Python tooling (best-in-class)
 brew "uv"
