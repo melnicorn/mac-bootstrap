@@ -41,6 +41,7 @@ ALL_STEPS=(
   antigravity
   mysql
   opencode
+  python
 )
 
 run() {
@@ -352,6 +353,13 @@ setup_opencode() {
   run bash "$repo_root/scripts/setup-opencode.sh"
 }
 
+setup_python() {
+  bold "Python"
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  run bash "$repo_root/scripts/setup-python.sh"
+}
+
 main() {
   parse_args "$@"
   is_macos || die "This bootstrap is for macOS only."
@@ -403,6 +411,7 @@ main() {
   step_enabled antigravity   && install_antigravity
   step_enabled mysql         && setup_mysql
   step_enabled opencode      && setup_opencode
+  step_enabled python        && setup_python
 
   bold "Done"
   info "Recommended: quit/reopen terminal (or log out/in) to ensure shell + PATH changes apply."

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE_PATH="$HOME/Development/.disk-images/Repos.sparsebundle"
-MOUNTPOINT="$HOME/Development/Repos"
+IMAGE_PATH="$HOME/.disk-images/Development.sparsebundle"
+MOUNTPOINT="$HOME/Development"
 
-mkdir -p "$HOME/Development/.disk-images"
+mkdir -p "$HOME/.disk-images"
 mkdir -p "$MOUNTPOINT"
 
 if mount | grep -q "on ${MOUNTPOINT//\//\\/} "; then

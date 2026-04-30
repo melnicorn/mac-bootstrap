@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>com.melnicorn.mount-repos</string>
+    <string>com.melnicorn.mount-development</string>
 
     <key>ProgramArguments</key>
     <array>

@@ -1,1 +1,7 @@
-# VOLTA_HOME and its PATH entry are set in zshenv (available to all shells)
+# Volta and PNPM PATH entries are set here to ensure they take precedence over Homebrew
+
+# Volta (Node version manager)
+export PATH="$VOLTA_HOME/bin:$PATH"
+
+# pnpm
+export PATH="$PNPM_HOME:$PATH"

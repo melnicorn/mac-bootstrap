@@ -4,8 +4,9 @@
 
 # Volta (Node version manager)
 export VOLTA_HOME="$HOME/.volta"
-[[ ":$PATH:" != *":$VOLTA_HOME/bin:"* ]] && export PATH="$VOLTA_HOME/bin:$PATH"
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
-[[ ":$PATH:" != *":$PNPM_HOME:"* ]] && export PATH="$PNPM_HOME:$PATH"
+
+# uv (Python toolchain manager) — prefer uv-managed Python over system Python
+export UV_PYTHON_PREFERENCE=managed

@@ -3,10 +3,10 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_DIR="$HOME/Development/.disk-images"
-IMAGE_PATH="$IMAGE_DIR/Repos.sparsebundle"
-MOUNTPOINT="$HOME/Development/Repos"
-VOLUME_NAME="Repos"
+IMAGE_DIR="$HOME/.disk-images"
+IMAGE_PATH="$IMAGE_DIR/Development.sparsebundle"
+MOUNTPOINT="$HOME/Development"
+VOLUME_NAME="Development"
 MAX_SIZE="${REPOS_VOLUME_MAX_SIZE:-50g}" # change by env var if desired
 
 mkdir -p "$IMAGE_DIR"
