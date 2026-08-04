@@ -29,6 +29,8 @@ Options:
   --dry-run              Print commands instead of executing them
   --hostname NAME        Set the machine hostname
   --only step1,step2,..  Run only the specified steps (comma-separated)
+  --update               Upgrade already-installed tools (brew packages, gcloud
+                         components, Node via Volta)
   --list                 List available step names and exit
   -h, --help             Show this help and exit
 ```
@@ -41,6 +43,8 @@ Options:
 ./bootstrap.sh --only git,zsh,gcloud      # several steps
 ./bootstrap.sh --dry-run --only homebrew  # preview without side-effects
 ./bootstrap.sh --hostname skywalker       # set hostname inline
+./bootstrap.sh --update                   # upgrade all tools
+./bootstrap.sh --only brew-bundle --update  # upgrade Homebrew packages only
 ```
 
 ---
@@ -62,6 +66,8 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | **gcloud** | Run interactive `gcloud init` (opens a browser for OAuth). |
 | **antigravity** | Open the [Antigravity](https://antigravity.google/download) download page for manual install. |
 | **mysql** | Start the MySQL service via `brew services` and remind you about `mysql_secure_installation`. |
+| **opencode** | Verify [OpenCode](https://opencode.ai) is installed and print the next steps (`opencode /connect` to link an AI provider). |
+| **python** | Install Python 3.13 via [uv](https://github.com/astral-sh/uv) (skipped if already present). |
 
 ---
 
@@ -70,7 +76,8 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | Category | Package | Type |
 |---|---|---|
 | Terminal | [iTerm2](https://iterm2.com) | cask |
-| Essentials | `git`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
+| Essentials | `git`, `gh`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
+| AI | [OpenCode](https://opencode.ai) (via `anomalyco/tap`) | brew |
 | Prompt | [starship](https://starship.rs) | brew |
 | Python | [uv](https://github.com/astral-sh/uv) | brew |
 | Node | [Volta](https://volta.sh) | brew |
@@ -89,12 +96,14 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 | `zshrc_00_env` | Reserved for environment variables (currently empty). |
 | `zshrc_10_hostname` | Keeps `$HOST` / `$HOSTNAME` in sync with System Settings changes via a `precmd` hook — no shell restart needed. |
 | `zshrc_20_gcloud` | Adds Google Cloud SDK component binaries to `$PATH`. |
-| `zshrc_30_path` | Sets `$VOLTA_HOME` and adds Volta's `bin/` to `$PATH`. |
+| `zshrc_30_path` | Prepends Volta's and pnpm's `bin/` to `$PATH` so they take precedence over Homebrew. |
 | `zshrc_40_alias` | Shell aliases (see [Aliases](#aliases) below). |
 | `zshrc_50_ghutils` | Git/GitHub helper functions (see [Git Utilities](#git-utilities) below). |
 | `zshrc_60_prompt` | Initialises the [starship](https://starship.rs) prompt (falls back to a minimal built-in prompt if starship isn't installed). |
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
+
+Separately, `zsh/zshenv` (symlinked to `~/.zshenv`) is sourced by **all** shells — interactive or not, including scripts, git hooks, and launchd jobs. It holds only environment variables (`$VOLTA_HOME`, `$PNPM_HOME`, `$UV_PYTHON_PREFERENCE`); aliases, completions, and the prompt belong in the `zshrc_*` fragments.
 
 ### Prompt
 
@@ -143,13 +152,16 @@ mac-bootstrap/
 │   ├── setup-zsh.sh              # Symlink zsh fragments
 │   ├── setup-gcloud.sh           # Interactive gcloud init
 │   ├── install-antigravity.sh    # Opens download page
-│   └── setup-mysql.sh            # Start MySQL via Homebrew services
+│   ├── setup-mysql.sh            # Start MySQL via Homebrew services
+│   ├── setup-opencode.sh         # Verify OpenCode + print next steps
+│   └── setup-python.sh           # Install Python via uv
 ├── zsh/
 │   ├── zshrc                     # Main loader (→ ~/.zshrc)
+│   ├── zshenv                    # Env vars for all shells (→ ~/.zshenv)
 │   ├── zshrc_00_env              # Environment variables
 │   ├── zshrc_10_hostname         # Hostname sync hook
 │   ├── zshrc_20_gcloud           # gcloud PATH
-│   ├── zshrc_30_path             # Volta PATH
+│   ├── zshrc_30_path             # Volta + pnpm PATH
 │   ├── zshrc_40_alias            # Shell aliases
 │   ├── zshrc_50_ghutils          # Git/GitHub helpers
 │   └── zshrc_60_prompt           # Starship prompt init
