@@ -11,6 +11,9 @@ brew "fd"
 brew "fzf"
 brew "opencode"
 
+# Shell prompt
+brew "starship"
+
 # Python tooling (best-in-class)
 brew "uv"
 

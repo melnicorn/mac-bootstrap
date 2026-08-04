@@ -58,7 +58,7 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | **brew-bundle** | Run `brew bundle` against the included [`Brewfile`](Brewfile) (see [Packages](#packages-brewfile) below). |
 | **git** | Set global `user.name` and `user.email` via [`scripts/setup-git.sh`](scripts/setup-git.sh). |
 | **repos-volume** | Create a **case-sensitive APFS sparsebundle** at `~/Development/.disk-images/Repos.sparsebundle`, mounted at `~/Development/Repos`. Installs a launchd agent to auto-mount on login (see [Repos Volume](#repos-volume-1) below). |
-| **zsh** | Symlink the modular zsh config into `~/.zsh/` and point `~/.zshrc` at the loader (see [Zsh Configuration](#zsh-configuration) below). |
+| **zsh** | Symlink the modular zsh config into `~/.zsh/`, point `~/.zshrc` at the loader, and link `config/starship.toml` → `~/.config/starship.toml` (see [Zsh Configuration](#zsh-configuration) below). |
 | **gcloud** | Run interactive `gcloud init` (opens a browser for OAuth). |
 | **antigravity** | Open the [Antigravity](https://antigravity.google/download) download page for manual install. |
 | **mysql** | Start the MySQL service via `brew services` and remind you about `mysql_secure_installation`. |
@@ -71,6 +71,7 @@ All steps run in the order shown below. Use `--only` to select a subset.
 |---|---|---|
 | Terminal | [iTerm2](https://iterm2.com) | cask |
 | Essentials | `git`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
+| Prompt | [starship](https://starship.rs) | brew |
 | Python | [uv](https://github.com/astral-sh/uv) | brew |
 | Node | [Volta](https://volta.sh) | brew |
 | JRE | [Eclipse Temurin](https://adoptium.net) | cask |
@@ -91,8 +92,13 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 | `zshrc_30_path` | Sets `$VOLTA_HOME` and adds Volta's `bin/` to `$PATH`. |
 | `zshrc_40_alias` | Shell aliases (see [Aliases](#aliases) below). |
 | `zshrc_50_ghutils` | Git/GitHub helper functions (see [Git Utilities](#git-utilities) below). |
+| `zshrc_60_prompt` | Initialises the [starship](https://starship.rs) prompt (falls back to a minimal built-in prompt if starship isn't installed). |
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
+
+### Prompt
+
+The prompt is [starship](https://starship.rs). Its config lives at [`config/starship.toml`](config/starship.toml) and is symlinked to `~/.config/starship.toml` by the `zsh` step. The file ships **empty** (everything commented out) so starship uses its defaults — uncomment the examples in it to customise. Existing real config files are backed up before the symlink is created.
 
 ### Aliases
 
@@ -145,7 +151,10 @@ mac-bootstrap/
 │   ├── zshrc_20_gcloud           # gcloud PATH
 │   ├── zshrc_30_path             # Volta PATH
 │   ├── zshrc_40_alias            # Shell aliases
-│   └── zshrc_50_ghutils          # Git/GitHub helpers
+│   ├── zshrc_50_ghutils          # Git/GitHub helpers
+│   └── zshrc_60_prompt           # Starship prompt init
+├── config/
+│   └── starship.toml             # Prompt config (→ ~/.config/starship.toml)
 └── launchd/
     └── com.melnicorn.mount-repos.plist  # Auto-mount agent template
 ```

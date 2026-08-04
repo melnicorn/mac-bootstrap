@@ -1,0 +1,57 @@
+# Starship prompt configuration — https://starship.rs/config/
+#
+# Symlinked to ~/.config/starship.toml by scripts/setup-zsh.sh.
+# Intentionally empty: starship's defaults are good out of the box.
+# Uncomment / edit anything below to customise.
+
+# ── Global ───────────────────────────────────────────────────────────────────
+
+# Blank line between prompts
+# add_newline = true
+
+# Put the input on its own line, below the info
+# format = "$all$line_break$character"
+
+# Give slow modules more time before starship gives up (ms, default 500)
+# command_timeout = 1000
+
+# ── Character ────────────────────────────────────────────────────────────────
+
+# [character]
+# success_symbol = "[❯](bold green)"
+# error_symbol = "[❯](bold red)"
+
+# ── Directory ────────────────────────────────────────────────────────────────
+
+# [directory]
+# truncation_length = 3
+# truncate_to_repo = true
+# style = "bold cyan"
+
+# ── Git ──────────────────────────────────────────────────────────────────────
+
+# [git_branch]
+# format = "on [$symbol$branch]($style) "
+
+# [git_status]
+# disabled = false
+
+# ── Toolchains ───────────────────────────────────────────────────────────────
+
+# [nodejs]
+# format = "via [⬢ $version](bold green) "
+
+# [python]
+# format = "via [🐍 $version](bold yellow) "
+
+# [gcloud]
+# format = "on [$symbol$active(/$project)]($style) "
+
+# ── Performance ──────────────────────────────────────────────────────────────
+# Disabling modules you never use keeps the prompt snappy.
+
+# [package]
+# disabled = true
+
+# [java]
+# disabled = true
