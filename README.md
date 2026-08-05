@@ -103,7 +103,16 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
 
-Separately, `zsh/zshenv` (symlinked to `~/.zshenv`) is sourced by **all** shells — interactive or not, including scripts, git hooks, and launchd jobs. It holds only environment variables (`$VOLTA_HOME`, `$PNPM_HOME`, `$UV_PYTHON_PREFERENCE`); aliases, completions, and the prompt belong in the `zshrc_*` fragments.
+Separately, `zsh/zshenv` (symlinked to `~/.zshenv`) is sourced by **all** shells — interactive or not, including scripts, git hooks, and launchd jobs. It holds only environment variables (`$VOLTA_HOME`, `$PNPM_HOME`, `$UV_PYTHON_PREFERENCE`); aliases, completions, and the prompt belong in the `zshrc_*` fragments. It also sources `~/.zshenv_local` last (also untracked) for per-machine environment variables that need to be visible to non-interactive shells too.
+
+Which local file to use:
+
+| File | Sourced by | Use for |
+|---|---|---|
+| `~/.zshenv_local` | **All** shells (incl. scripts, git hooks, launchd) | Env vars, secrets/tokens, `$PATH` entries tools need outside a terminal. |
+| `~/.zshrc_local` | Interactive shells only | Aliases, functions, completions, prompt tweaks. |
+
+Because `.zshenv` runs before `.zshrc`, anything in `~/.zshenv_local` is already set when the `zshrc_*` fragments load, so those fragments (and `~/.zshrc_local`) can override it.
 
 ### Prompt
 
@@ -157,7 +166,7 @@ mac-bootstrap/
 │   └── setup-python.sh           # Install Python via uv
 ├── zsh/
 │   ├── zshrc                     # Main loader (→ ~/.zshrc)
-│   ├── zshenv                    # Env vars for all shells (→ ~/.zshenv)
+│   ├── zshenv                    # Env vars for all shells (→ ~/.zshenv), sources ~/.zshenv_local
 │   ├── zshrc_00_env              # Environment variables
 │   ├── zshrc_10_hostname         # Hostname sync hook
 │   ├── zshrc_20_gcloud           # gcloud PATH
@@ -177,7 +186,7 @@ mac-bootstrap/
 
 - **Add packages** — edit [`Brewfile`](Brewfile) and re-run `./bootstrap.sh --only brew-bundle`.
 - **Add shell config** — create a new `zsh/zshrc_NN_name` file; it will be sourced automatically.
-- **Machine-local overrides** — put them in `~/.zshrc_local` (git-ignored).
+- **Machine-local overrides** — env vars for all shells go in `~/.zshenv_local`; interactive-only bits (aliases, functions, prompt) go in `~/.zshrc_local`. Neither is tracked in git.
 - **Skip steps** — use `--only` to run exactly the steps you need.
 
 ## License
