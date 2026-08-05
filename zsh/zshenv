@@ -10,3 +10,7 @@ export PNPM_HOME="$HOME/Library/pnpm"
 
 # uv (Python toolchain manager) — prefer uv-managed Python over system Python
 export UV_PYTHON_PREFERENCE=managed
+
+# Optional per-machine env overrides (not in git)
+# Sourced last so it can override anything above; applies to all shells
+[[ -f "$HOME/.zshenv_local" ]] && source "$HOME/.zshenv_local"

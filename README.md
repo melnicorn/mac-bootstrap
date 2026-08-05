@@ -29,6 +29,8 @@ Options:
   --dry-run              Print commands instead of executing them
   --hostname NAME        Set the machine hostname
   --only step1,step2,..  Run only the specified steps (comma-separated)
+  --update               Upgrade already-installed tools (brew packages, gcloud
+                         components, Node via Volta)
   --list                 List available step names and exit
   -h, --help             Show this help and exit
 ```
@@ -41,6 +43,8 @@ Options:
 ./bootstrap.sh --only git,zsh,gcloud      # several steps
 ./bootstrap.sh --dry-run --only homebrew  # preview without side-effects
 ./bootstrap.sh --hostname skywalker       # set hostname inline
+./bootstrap.sh --update                   # upgrade all tools
+./bootstrap.sh --only brew-bundle --update  # upgrade Homebrew packages only
 ```
 
 ---
@@ -59,10 +63,13 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | **git** | Set global `user.name` and `user.email` via [`scripts/setup-git.sh`](scripts/setup-git.sh). |
 | **repos-volume** | Create a **case-sensitive APFS sparsebundle** at `~/Development/.disk-images/Repos.sparsebundle`, mounted at `~/Development/Repos`. Installs a launchd agent to auto-mount on login (see [Repos Volume](#repos-volume-1) below). |
 | **zsh** | Symlink the modular zsh config into `~/.zsh/` and point `~/.zshrc` at the loader (see [Zsh Configuration](#zsh-configuration) below). |
+| **zsh** | Symlink the modular zsh config into `~/.zsh/`, point `~/.zshrc` at the loader, and link `config/starship.toml` → `~/.config/starship.toml` (see [Zsh Configuration](#zsh-configuration) below). |
 | **starship** | Link `starship/starship.toml` → `~/.config/starship.toml`, verify the Nerd Font is installed, and drop an iTerm2 dynamic profile that uses it (see [Starship Prompt](#starship-prompt) below). |
 | **gcloud** | Run interactive `gcloud init` (opens a browser for OAuth). |
 | **antigravity** | Open the [Antigravity](https://antigravity.google/download) download page for manual install. |
 | **mysql** | Start the MySQL service via `brew services` and remind you about `mysql_secure_installation`. |
+| **opencode** | Verify [OpenCode](https://opencode.ai) is installed and print the next steps (`opencode /connect` to link an AI provider). |
+| **python** | Install Python 3.13 via [uv](https://github.com/astral-sh/uv) (skipped if already present). |
 
 ---
 
@@ -73,7 +80,9 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | Terminal | [iTerm2](https://iterm2.com) | cask |
 | Prompt | [starship](https://starship.rs) | brew |
 | Fonts | [MesloLG Nerd Font](https://github.com/ryanoasis/nerd-fonts) (includes MesloLGS Nerd Font Mono) | cask |
-| Essentials | `git`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
+| Essentials | `git`, `gh`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
+| AI | [OpenCode](https://opencode.ai) (via `anomalyco/tap`) | brew |
+| Prompt | [starship](https://starship.rs) | brew |
 | Python | [uv](https://github.com/astral-sh/uv) | brew |
 | Node | [Volta](https://volta.sh) | brew |
 | JRE | [Eclipse Temurin](https://adoptium.net) | cask |
@@ -91,12 +100,27 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 | `zshrc_00_env` | Reserved for environment variables (currently empty). |
 | `zshrc_10_hostname` | Keeps `$HOST` / `$HOSTNAME` in sync with System Settings changes via a `precmd` hook — no shell restart needed. |
 | `zshrc_20_gcloud` | Adds Google Cloud SDK component binaries to `$PATH`. |
-| `zshrc_30_path` | Sets `$VOLTA_HOME` and adds Volta's `bin/` to `$PATH`. |
+| `zshrc_30_path` | Prepends Volta's and pnpm's `bin/` to `$PATH` so they take precedence over Homebrew. |
 | `zshrc_40_alias` | Shell aliases (see [Aliases](#aliases) below). |
 | `zshrc_50_ghutils` | Git/GitHub helper functions (see [Git Utilities](#git-utilities) below). |
-| `zshrc_60_starship` | Initialises the [starship](https://starship.rs) prompt (no-op if `starship` isn't on `$PATH`). |
+| `zshrc_60_prompt` | Initialises the [starship](https://starship.rs) prompt (falls back to a minimal built-in prompt if starship isn't installed). |
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
+
+Separately, `zsh/zshenv` (symlinked to `~/.zshenv`) is sourced by **all** shells — interactive or not, including scripts, git hooks, and launchd jobs. It holds only environment variables (`$VOLTA_HOME`, `$PNPM_HOME`, `$UV_PYTHON_PREFERENCE`); aliases, completions, and the prompt belong in the `zshrc_*` fragments. It also sources `~/.zshenv_local` last (also untracked) for per-machine environment variables that need to be visible to non-interactive shells too.
+
+Which local file to use:
+
+| File | Sourced by | Use for |
+|---|---|---|
+| `~/.zshenv_local` | **All** shells (incl. scripts, git hooks, launchd) | Env vars, secrets/tokens, `$PATH` entries tools need outside a terminal. |
+| `~/.zshrc_local` | Interactive shells only | Aliases, functions, completions, prompt tweaks. |
+
+Because `.zshenv` runs before `.zshrc`, anything in `~/.zshenv_local` is already set when the `zshrc_*` fragments load, so those fragments (and `~/.zshrc_local`) can override it.
+
+### Prompt
+
+The prompt is [starship](https://starship.rs). Its config lives at [`config/starship.toml`](config/starship.toml) and is symlinked to `~/.config/starship.toml` by the `zsh` step. The file ships **empty** (everything commented out) so starship uses its defaults — uncomment the examples in it to customise. Existing real config files are backed up before the symlink is created.
 
 ### Aliases
 
@@ -168,13 +192,22 @@ mac-bootstrap/
 ├── zsh/
 │   ├── zshrc                     # Main loader (→ ~/.zshrc)
 │   ├── zshenv                    # All-shell env vars (→ ~/.zshenv)
+│   ├── setup-mysql.sh            # Start MySQL via Homebrew services
+│   ├── setup-opencode.sh         # Verify OpenCode + print next steps
+│   └── setup-python.sh           # Install Python via uv
+├── zsh/
+│   ├── zshrc                     # Main loader (→ ~/.zshrc)
+│   ├── zshenv                    # Env vars for all shells (→ ~/.zshenv), sources ~/.zshenv_local
 │   ├── zshrc_00_env              # Environment variables
 │   ├── zshrc_10_hostname         # Hostname sync hook
 │   ├── zshrc_20_gcloud           # gcloud PATH
-│   ├── zshrc_30_path             # Volta PATH
+│   ├── zshrc_30_path             # Volta + pnpm PATH
 │   ├── zshrc_40_alias            # Shell aliases
 │   ├── zshrc_50_ghutils          # Git/GitHub helpers
 │   └── zshrc_60_starship         # Starship prompt init
+│   └── zshrc_60_prompt           # Starship prompt init
+├── config/
+│   └── starship.toml             # Prompt config (→ ~/.config/starship.toml)
 └── launchd/
     └── com.melnicorn.mount-repos.plist  # Auto-mount agent template
 ```
@@ -185,7 +218,7 @@ mac-bootstrap/
 
 - **Add packages** — edit [`Brewfile`](Brewfile) and re-run `./bootstrap.sh --only brew-bundle`.
 - **Add shell config** — create a new `zsh/zshrc_NN_name` file; it will be sourced automatically.
-- **Machine-local overrides** — put them in `~/.zshrc_local` (git-ignored).
+- **Machine-local overrides** — env vars for all shells go in `~/.zshenv_local`; interactive-only bits (aliases, functions, prompt) go in `~/.zshrc_local`. Neither is tracked in git.
 - **Skip steps** — use `--only` to run exactly the steps you need.
 
 ## License

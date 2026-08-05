@@ -6,6 +6,8 @@ ZSH_SRC="$REPO_ROOT/zsh"
 ZSH_DST="$HOME/.zsh"
 ZSHRC="$HOME/.zshrc"
 ZSHENV="$HOME/.zshenv"
+STARSHIP_SRC="$REPO_ROOT/config/starship.toml"
+STARSHIP_DST="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 
 echo "Setting up zsh config..."
 
@@ -44,5 +46,14 @@ elif [[ ! -e "$ZSHENV" ]]; then
   echo "Creating new .zshenv link..."
 fi
 ln -sf "$ZSH_SRC/zshenv" "$ZSHENV"
+
+# Backup existing starship config if it's a real file, then symlink
+mkdir -p "$(dirname "$STARSHIP_DST")"
+if [[ -e "$STARSHIP_DST" && ! -L "$STARSHIP_DST" ]]; then
+  backup="$STARSHIP_DST.backup.$(date +%Y%m%d-%H%M%S)"
+  echo "Backing up existing starship.toml → $backup"
+  mv "$STARSHIP_DST" "$backup"
+fi
+ln -sf "$STARSHIP_SRC" "$STARSHIP_DST"
 
 echo "zsh setup complete."
