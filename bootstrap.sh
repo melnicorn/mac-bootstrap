@@ -37,6 +37,7 @@ ALL_STEPS=(
   git
   repos-volume
   zsh
+  starship
   gcloud
   antigravity
   mysql
@@ -310,6 +311,13 @@ setup_zsh() {
   run bash "$repo_root/scripts/setup-zsh.sh"
 }
 
+setup_starship() {
+  bold "Starship prompt"
+  local repo_root
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  run bash "$repo_root/scripts/setup-starship.sh"
+}
+
 setup_gcloud() {
   bold "gcloud"
   local repo_root
@@ -407,6 +415,7 @@ main() {
   step_enabled git           && setup_git
   step_enabled repos-volume  && setup_repos_volume
   step_enabled zsh           && setup_zsh
+  step_enabled starship      && setup_starship
   step_enabled gcloud        && setup_gcloud
   step_enabled antigravity   && install_antigravity
   step_enabled mysql         && setup_mysql

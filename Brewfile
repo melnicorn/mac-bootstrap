@@ -1,6 +1,12 @@
 # Terminal
 cask "iterm2"
 
+# Prompt
+brew "starship"
+
+# Fonts (MesloLGS Nerd Font Mono — glyphs for the starship prompt)
+cask "font-meslo-lg-nerd-font"
+
 # Essentials
 tap "anomalyco/tap"
 brew "git"

@@ -1,0 +1,6 @@
+# Starship prompt — must come after PATH setup so the binary is findable.
+# Config lives at ~/.config/starship.toml (symlinked from this repo by setup-starship.sh).
+
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi

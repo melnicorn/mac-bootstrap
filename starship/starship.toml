@@ -1,0 +1,64 @@
+# Starship prompt configuration
+# Symlinked to ~/.config/starship.toml by scripts/setup-starship.sh
+# Reference: https://starship.rs/config/
+#
+# Glyphs below require a Nerd Font (MesloLGS Nerd Font Mono, installed via the Brewfile).
+
+add_newline = true
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$java\
+$golang\
+$rust\
+$gcloud\
+$cmd_duration\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+style = "bold cyan"
+read_only = " 󰌾"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+
+[git_status]
+style = "bold yellow"
+
+[cmd_duration]
+min_time = 2000
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+[nodejs]
+symbol = " "
+
+[python]
+symbol = " "
+
+[java]
+symbol = " "
+
+[golang]
+symbol = " "
+
+[rust]
+symbol = " "
+
+# gcloud shows on every prompt by default once a config exists — noisy, so opt in
+# per-project via ~/.config/starship.toml overrides if you want it.
+[gcloud]
+disabled = true

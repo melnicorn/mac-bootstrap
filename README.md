@@ -59,6 +59,7 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | **git** | Set global `user.name` and `user.email` via [`scripts/setup-git.sh`](scripts/setup-git.sh). |
 | **repos-volume** | Create a **case-sensitive APFS sparsebundle** at `~/Development/.disk-images/Repos.sparsebundle`, mounted at `~/Development/Repos`. Installs a launchd agent to auto-mount on login (see [Repos Volume](#repos-volume-1) below). |
 | **zsh** | Symlink the modular zsh config into `~/.zsh/` and point `~/.zshrc` at the loader (see [Zsh Configuration](#zsh-configuration) below). |
+| **starship** | Link `starship/starship.toml` → `~/.config/starship.toml`, verify the Nerd Font is installed, and drop an iTerm2 dynamic profile that uses it (see [Starship Prompt](#starship-prompt) below). |
 | **gcloud** | Run interactive `gcloud init` (opens a browser for OAuth). |
 | **antigravity** | Open the [Antigravity](https://antigravity.google/download) download page for manual install. |
 | **mysql** | Start the MySQL service via `brew services` and remind you about `mysql_secure_installation`. |
@@ -70,6 +71,8 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | Category | Package | Type |
 |---|---|---|
 | Terminal | [iTerm2](https://iterm2.com) | cask |
+| Prompt | [starship](https://starship.rs) | brew |
+| Fonts | [MesloLG Nerd Font](https://github.com/ryanoasis/nerd-fonts) (includes MesloLGS Nerd Font Mono) | cask |
 | Essentials | `git`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
 | Python | [uv](https://github.com/astral-sh/uv) | brew |
 | Node | [Volta](https://volta.sh) | brew |
@@ -91,6 +94,7 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 | `zshrc_30_path` | Sets `$VOLTA_HOME` and adds Volta's `bin/` to `$PATH`. |
 | `zshrc_40_alias` | Shell aliases (see [Aliases](#aliases) below). |
 | `zshrc_50_ghutils` | Git/GitHub helper functions (see [Git Utilities](#git-utilities) below). |
+| `zshrc_60_starship` | Initialises the [starship](https://starship.rs) prompt (no-op if `starship` isn't on `$PATH`). |
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
 
@@ -111,6 +115,26 @@ The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked 
 | `gopen` | Opens the current repo's GitHub page in the browser (supports SSH and HTTPS remotes). |
 | `gact` | Same as `gopen` but opens the **Actions** tab (`/actions`). |
 | `create-branch <name>` | Creates a new local branch, pushes it to `origin`, and sets upstream tracking. |
+
+---
+
+## Starship Prompt
+
+[Starship](https://starship.rs) is the shell prompt. It's initialised from `zsh/zshrc_60_starship` and configured by `starship/starship.toml`, which the `starship` step symlinks to `~/.config/starship.toml` (any pre-existing real file is backed up first).
+
+The prompt uses Nerd Font glyphs, so it needs a patched font. The Brewfile installs **`font-meslo-lg-nerd-font`**, which provides **MesloLGS Nerd Font Mono**.
+
+To make the terminal actually use it, the step writes an iTerm2 [dynamic profile](https://iterm2.com/documentation-dynamic-profiles.html) named **Bootstrap** to `~/Library/Application Support/iTerm2/DynamicProfiles/bootstrap.json`. Adding a profile is non-destructive — your existing profiles are untouched — so you still need to select it once:
+
+**iTerm2 → Settings → Profiles → Bootstrap → Other Actions → Set as Default**
+
+Or, with iTerm2 **closed**:
+
+```bash
+defaults write com.googlecode.iterm2 "Default Bookmark Guid" -string "8B1FE1B4-3C6A-4E7B-9E0E-5C2A7D4F1A90"
+```
+
+For any other terminal, set the font to `MesloLGS Nerd Font Mono` by hand.
 
 ---
 
@@ -135,17 +159,22 @@ mac-bootstrap/
 │   ├── setup-repos-volume.sh     # Create & mount case-sensitive volume
 │   ├── mount-repos-volume.sh     # Lightweight mount helper (used by launchd)
 │   ├── setup-zsh.sh              # Symlink zsh fragments
+│   ├── setup-starship.sh         # Link starship.toml + iTerm2 font profile
 │   ├── setup-gcloud.sh           # Interactive gcloud init
 │   ├── install-antigravity.sh    # Opens download page
 │   └── setup-mysql.sh            # Start MySQL via Homebrew services
+├── starship/
+│   └── starship.toml             # Prompt config (→ ~/.config/starship.toml)
 ├── zsh/
 │   ├── zshrc                     # Main loader (→ ~/.zshrc)
+│   ├── zshenv                    # All-shell env vars (→ ~/.zshenv)
 │   ├── zshrc_00_env              # Environment variables
 │   ├── zshrc_10_hostname         # Hostname sync hook
 │   ├── zshrc_20_gcloud           # gcloud PATH
 │   ├── zshrc_30_path             # Volta PATH
 │   ├── zshrc_40_alias            # Shell aliases
-│   └── zshrc_50_ghutils          # Git/GitHub helpers
+│   ├── zshrc_50_ghutils          # Git/GitHub helpers
+│   └── zshrc_60_starship         # Starship prompt init
 └── launchd/
     └── com.melnicorn.mount-repos.plist  # Auto-mount agent template
 ```
