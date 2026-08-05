@@ -3,4 +3,7 @@
 
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init zsh)"
+else
+  # Keep a usable prompt on machines where the brew-bundle step hasn't run yet.
+  PROMPT='%F{cyan}%~%f %# '
 fi

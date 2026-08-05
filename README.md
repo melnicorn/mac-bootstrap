@@ -63,7 +63,6 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | **git** | Set global `user.name` and `user.email` via [`scripts/setup-git.sh`](scripts/setup-git.sh). |
 | **repos-volume** | Create a **case-sensitive APFS sparsebundle** at `~/Development/.disk-images/Repos.sparsebundle`, mounted at `~/Development/Repos`. Installs a launchd agent to auto-mount on login (see [Repos Volume](#repos-volume-1) below). |
 | **zsh** | Symlink the modular zsh config into `~/.zsh/` and point `~/.zshrc` at the loader (see [Zsh Configuration](#zsh-configuration) below). |
-| **zsh** | Symlink the modular zsh config into `~/.zsh/`, point `~/.zshrc` at the loader, and link `config/starship.toml` → `~/.config/starship.toml` (see [Zsh Configuration](#zsh-configuration) below). |
 | **starship** | Link `starship/starship.toml` → `~/.config/starship.toml`, verify the Nerd Font is installed, and drop an iTerm2 dynamic profile that uses it (see [Starship Prompt](#starship-prompt) below). |
 | **gcloud** | Run interactive `gcloud init` (opens a browser for OAuth). |
 | **antigravity** | Open the [Antigravity](https://antigravity.google/download) download page for manual install. |
@@ -82,7 +81,6 @@ All steps run in the order shown below. Use `--only` to select a subset.
 | Fonts | [MesloLG Nerd Font](https://github.com/ryanoasis/nerd-fonts) (includes MesloLGS Nerd Font Mono) | cask |
 | Essentials | `git`, `gh`, `jq`, `ripgrep`, `fd`, `fzf` | brew |
 | AI | [OpenCode](https://opencode.ai) (via `anomalyco/tap`) | brew |
-| Prompt | [starship](https://starship.rs) | brew |
 | Python | [uv](https://github.com/astral-sh/uv) | brew |
 | Node | [Volta](https://volta.sh) | brew |
 | JRE | [Eclipse Temurin](https://adoptium.net) | cask |
@@ -103,7 +101,7 @@ The zsh setup uses a **numbered-fragment** pattern. The main loader (`zsh/zshrc`
 | `zshrc_30_path` | Prepends Volta's and pnpm's `bin/` to `$PATH` so they take precedence over Homebrew. |
 | `zshrc_40_alias` | Shell aliases (see [Aliases](#aliases) below). |
 | `zshrc_50_ghutils` | Git/GitHub helper functions (see [Git Utilities](#git-utilities) below). |
-| `zshrc_60_prompt` | Initialises the [starship](https://starship.rs) prompt (falls back to a minimal built-in prompt if starship isn't installed). |
+| `zshrc_60_starship` | Initialises the [starship](https://starship.rs) prompt (falls back to a minimal built-in prompt if starship isn't installed). |
 
 The loader also sources `~/.zshrc_local` if it exists, which is **not** tracked in git — use it for per-machine overrides.
 
@@ -118,9 +116,7 @@ Which local file to use:
 
 Because `.zshenv` runs before `.zshrc`, anything in `~/.zshenv_local` is already set when the `zshrc_*` fragments load, so those fragments (and `~/.zshrc_local`) can override it.
 
-### Prompt
 
-The prompt is [starship](https://starship.rs). Its config lives at [`config/starship.toml`](config/starship.toml) and is symlinked to `~/.config/starship.toml` by the `zsh` step. The file ships **empty** (everything commented out) so starship uses its defaults — uncomment the examples in it to customise. Existing real config files are backed up before the symlink is created.
 
 ### Aliases
 
@@ -191,12 +187,6 @@ mac-bootstrap/
 │   └── starship.toml             # Prompt config (→ ~/.config/starship.toml)
 ├── zsh/
 │   ├── zshrc                     # Main loader (→ ~/.zshrc)
-│   ├── zshenv                    # All-shell env vars (→ ~/.zshenv)
-│   ├── setup-mysql.sh            # Start MySQL via Homebrew services
-│   ├── setup-opencode.sh         # Verify OpenCode + print next steps
-│   └── setup-python.sh           # Install Python via uv
-├── zsh/
-│   ├── zshrc                     # Main loader (→ ~/.zshrc)
 │   ├── zshenv                    # Env vars for all shells (→ ~/.zshenv), sources ~/.zshenv_local
 │   ├── zshrc_00_env              # Environment variables
 │   ├── zshrc_10_hostname         # Hostname sync hook
@@ -205,9 +195,6 @@ mac-bootstrap/
 │   ├── zshrc_40_alias            # Shell aliases
 │   ├── zshrc_50_ghutils          # Git/GitHub helpers
 │   └── zshrc_60_starship         # Starship prompt init
-│   └── zshrc_60_prompt           # Starship prompt init
-├── config/
-│   └── starship.toml             # Prompt config (→ ~/.config/starship.toml)
 └── launchd/
     └── com.melnicorn.mount-repos.plist  # Auto-mount agent template
 ```
